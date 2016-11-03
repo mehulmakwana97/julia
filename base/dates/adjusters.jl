@@ -23,24 +23,26 @@ Dates.trunc(::Dates.TimeType, ::Type{Dates.Period})
 
 # Adjusters
 """
-    firstdayofweek(dt::TimeType) -> TimeType
+    firstdayofweek(dt::TimeType[, firstday::DayOfWeek=Monday]) -> TimeType
 
-Adjusts `dt` to the Monday of its week.
+Adjusts `dt` to the first day of its week. The optional second argument specifies the
+`DayOfWeek` which starts the week: by default, this is `Monday`, as per ISO 8601.
 """
 function firstdayofweek end
 
-firstdayofweek(dt::Date) = Date(UTD(value(dt) - dayofweek(dt) + 1))
-firstdayofweek(dt::DateTime) = DateTime(firstdayofweek(Date(dt)))
+firstdayofweek(dt::Date, firstday::DayOfWeek=Monday) = Date(UTD(value(dt) - mod(Int(DayOfWeek(dt)) - Int(firstday),7)))
+firstdayofweek(dt::DateTime, firstday::DayOfWeek=Monday) = DateTime(firstdayofweek(Date(dt),firstday))
 
 """
-    lastdayofweek(dt::TimeType) -> TimeType
+    lastdayofweek(dt::TimeType[, lastday::DayOfWeek=Sunday]) -> TimeType
 
-Adjusts `dt` to the Sunday of its week.
+Adjusts `dt` to the last day of its week. The optional second argument specifies the
+`DayOfWeek` which ends the week: by default, this is `Sunday`, as per ISO 8601.
 """
 function lastdayofweek end
 
-lastdayofweek(dt::Date) = Date(UTD(value(dt) + (7 - dayofweek(dt))))
-lastdayofweek(dt::DateTime) = DateTime(lastdayofweek(Date(dt)))
+lastdayofweek(dt::Date, lastday::DayOfWeek=Sunday) = Date(UTD(value(dt) + mod(Int(lastday) - Int(DayOfWeek(dt)),7)))
+lastdayofweek(dt::DateTime, lastday::DayOfWeek=Sunday) = DateTime(lastdayofweek(Date(dt),lastday))
 
 """
     firstdayofmonth(dt::TimeType) -> TimeType
@@ -49,7 +51,7 @@ Adjusts `dt` to the first day of its month.
 """
 function firstdayofmonth end
 
-firstdayofmonth(dt::Date) = Date(UTD(value(dt) - day(dt) + 1))
+firstdayofmonth(dt::Date) = Date(UTD(value(dt) - dayofmonth(dt) + 1))
 firstdayofmonth(dt::DateTime) = DateTime(firstdayofmonth(Date(dt)))
 
 """
@@ -184,24 +186,15 @@ function DateTime(func::Function, y, m, d, h, mi, s; step::Period=Millisecond(1)
     return adjust(DateFunction(func, negate, DateTime(y)), DateTime(y, m, d, h, mi, s), step, limit)
 end
 
-# Return the next TimeType that falls on dow
-ISDAYOFWEEK = Dict(Mon => DateFunction(ismonday, false, Date(0)),
-                   Tue => DateFunction(istuesday, false, Date(0)),
-                   Wed => DateFunction(iswednesday, false, Date(0)),
-                   Thu => DateFunction(isthursday, false, Date(0)),
-                   Fri => DateFunction(isfriday, false, Date(0)),
-                   Sat => DateFunction(issaturday, false, Date(0)),
-                   Sun => DateFunction(issunday, false, Date(0)))
-
 # "same" indicates whether the current date can be considered or not
 """
-    tonext(dt::TimeType,dow::Int;same::Bool=false) -> TimeType
+    tonext(dt::TimeType,dow::DayOfWeek;same::Bool=false) -> TimeType
 
 Adjusts `dt` to the next day of week corresponding to `dow` with `1 = Monday, 2 = Tuesday,
 etc`. Setting `same=true` allows the current `dt` to be considered as the next `dow`,
 allowing for no adjustment to occur.
 """
-tonext(dt::TimeType, dow::Int; same::Bool=false) = adjust(ISDAYOFWEEK[dow], same ? dt : dt+Day(1), Day(1), 7)
+tonext(dt::TimeType, dow::DayOfWeek; same::Bool=false) = lastdayofweek(same ? dt : dt+Day(1), dow)
 
 # Return the next TimeType where func evals true using step in incrementing
 """
@@ -217,13 +210,13 @@ function tonext(func::Function, dt::TimeType;step::Period=Day(1), negate::Bool=f
 end
 
 """
-    toprev(dt::TimeType,dow::Int;same::Bool=false) -> TimeType
+    toprev(dt::TimeType,dow::DayOfWeek;same::Bool=false) -> TimeType
 
 Adjusts `dt` to the previous day of week corresponding to `dow` with `1 = Monday, 2 =
 Tuesday, etc`. Setting `same=true` allows the current `dt` to be considered as the previous
 `dow`, allowing for no adjustment to occur.
 """
-toprev(dt::TimeType, dow::Int; same::Bool=false) = adjust(ISDAYOFWEEK[dow], same ? dt : dt+Day(-1), Day(-1), 7)
+toprev(dt::TimeType, dow::DayOfWeek; same::Bool=false) = firstdayofweek(same ? dt : dt-Day(1), dow)
 
 """
     toprev(func::Function,dt::TimeType;step=Day(-1),negate=false,limit=10000,same=false) -> TimeType
@@ -239,26 +232,26 @@ end
 
 # Return the first TimeType that falls on dow in the Month or Year
 """
-    tofirst(dt::TimeType,dow::Int;of=Month) -> TimeType
+    tofirst(dt::TimeType, dow::DayOfWeek; of=Month) -> TimeType
 
 Adjusts `dt` to the first `dow` of its month. Alternatively, `of=Year` will adjust to the
 first `dow` of the year.
 """
-function tofirst(dt::TimeType, dow::Int; of::Union{Type{Year}, Type{Month}}=Month)
+function tofirst(dt::TimeType, dow::DayOfWeek; of::Union{Type{Year}, Type{Month}}=Month)
     dt = of <: Month ? firstdayofmonth(dt) : firstdayofyear(dt)
-    return adjust(ISDAYOFWEEK[dow], dt, Day(1), 366)
+    lastdayofweek(dt, dow)
 end
 
 # Return the last TimeType that falls on dow in the Month or Year
 """
-    tolast(dt::TimeType,dow::Int;of=Month) -> TimeType
+    tolast(dt::TimeType,dow::DayOfWeek;of=Month) -> TimeType
 
 Adjusts `dt` to the last `dow` of its month. Alternatively, `of=Year` will adjust to the
 last `dow` of the year.
 """
-function tolast(dt::TimeType, dow::Int; of::Union{Type{Year}, Type{Month}}=Month)
+function tolast(dt::TimeType, dow::DayOfWeek; of::Union{Type{Year}, Type{Month}}=Month)
     dt = of <: Month ? lastdayofmonth(dt) : lastdayofyear(dt)
-    return adjust(ISDAYOFWEEK[dow], dt, Day(-1), 366)
+    firstdayofweek(dt, dow)
 end
 
 function recur{T<:TimeType}(fun::Function, start::T, stop::T; step::Period=Day(1), negate::Bool=false, limit::Int=10000)
