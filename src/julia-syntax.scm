@@ -1747,6 +1747,30 @@
    '|<:| syntactic-op-to-call
    '|>:| syntactic-op-to-call
 
+   'where
+   (lambda (e)
+     (let ((lb  #f)
+           (ub  #f)
+           (v   #f)
+           (var (caddr e)))
+       (cond ((symbol? var)  (set! v var))
+             ((and (eq? (car var) 'comparison) (length= var 6))
+              (set! v (cadddr var))
+              (cond ((and (eq? (caddr var) '|<:|) (eq? (caddr (cddr var)) '|<:|))
+                     (set! lb (cadr var)) (set! ub (last var)))
+                    (else (error "invalid bounds in \"where\""))))
+             ((eq? (car var) '|<:|)
+              (set! v (cadr var)) (set! ub (caddr var)))
+             ((eq? (car var) '|>:|)
+              (set! v (cadr var)) (set! lb (caddr var)))
+             (else (error "invalid variable expression in \"where\"")))
+       (expand-forms
+        `(let (call (core UnionAll) ,v ,(cadr e))
+           (= ,v (call (core TypeVar) ',v
+                       ,@(if ub
+                             (if lb (list lb ub) (list ub))
+                             (if lb (list lb '(core Any)) '()))))))))
+
    'const  expand-const-decl
    'local  expand-local-or-global-decl
    'global expand-local-or-global-decl

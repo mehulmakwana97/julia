@@ -10,6 +10,7 @@
   (append! (add-dots '(= += -= *= /= //= |\\=| ^= ÷= %= <<= >>= >>>= |\|=| &=))
            '(:= => ~ $=)))
 (define prec-conditional '(?))
+;; `where`
 (define prec-arrow       (append!
                           '(-- -->)
                           (add-dots '(← → ↔ ↚ ↛ ↠ ↣ ↦ ↮ ⇎ ⇏ ⇒ ⇔ ⇴ ⇶ ⇷ ⇸ ⇹ ⇺ ⇻ ⇼ ⇽ ⇾ ⇿ ⟵ ⟶ ⟷ ⟷ ⟹ ⟺ ⟻ ⟼ ⟽ ⟾ ⟿ ⤀ ⤁ ⤂ ⤃ ⤄ ⤅ ⤆ ⤇ ⤌ ⤍ ⤎ ⤏ ⤐ ⤑ ⤔ ⤕ ⤖ ⤗ ⤘ ⤝ ⤞ ⤟ ⤠ ⥄ ⥅ ⥆ ⥇ ⥈ ⥊ ⥋ ⥎ ⥐ ⥒ ⥓ ⥖ ⥗ ⥚ ⥛ ⥞ ⥟ ⥢ ⥤ ⥦ ⥧ ⥨ ⥩ ⥪ ⥫ ⥬ ⥭ ⥰ ⧴ ⬱ ⬰ ⬲ ⬳ ⬴ ⬵ ⬶ ⬷ ⬸ ⬹ ⬺ ⬻ ⬼ ⬽ ⬾ ⬿ ⭀ ⭁ ⭂ ⭃ ⭄ ⭇ ⭈ ⭉ ⭊ ⭋ ⭌ ￩ ￫))))
@@ -570,7 +571,7 @@
          ex)))
 
 (define (parse-cond s)
-  (let ((ex (parse-arrow s)))
+  (let ((ex (parse-where s)))
     (cond ((eq? (peek-token s) '?)
            (begin (take-token s)
                   (let ((then (without-range-colon (parse-eq* s))))
@@ -578,6 +579,14 @@
                         (error "colon expected in \"?\" expression")
                         (list 'if ex then (parse-eq* s))))))
           (else ex))))
+
+(define (parse-where s)
+  (let loop ((ex (parse-arrow s))
+             (t  (peek-token s)))
+    (if (eq? t 'where)
+        (begin (take-token s)
+               (loop (list 'where ex (parse-comparison s)) (peek-token s)))
+        ex)))
 
 (define (invalid-initial-token? tok)
   (or (eof-object? tok)
@@ -1219,7 +1228,7 @@
               (parse-subtype-spec s)))
        ((typealias)
         (let ((lhs (with-space-sensitive (parse-call s))))
-              (list 'typealias lhs (parse-arrow s))))
+              (list 'typealias lhs (parse-where s))))
        ((try)
         (let ((try-block (if (memq (require-token s) '(catch finally))
                              '(block)
