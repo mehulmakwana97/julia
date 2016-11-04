@@ -219,8 +219,6 @@ dt = Dates.Date(2014,5,21)
 @test Dates.tonext(dt,Dates.Sun) == Dates.Date(2014,5,25)
 @test Dates.tonext(dt,Dates.Mon) == Dates.Date(2014,5,26)
 @test Dates.tonext(dt,Dates.Tue) == Dates.Date(2014,5,27)
-# No dayofweek function for out of range values
-#@test_throws KeyError Dates.tonext(dt,8)
 
 @test Dates.tonext(Dates.Date(0),Dates.Mon) == Dates.Date(0,1,3)
 
@@ -264,8 +262,6 @@ dt = Dates.Date(2014,5,21)
 @test Dates.toprev(dt,Dates.Sun) == Dates.Date(2014,5,18)
 @test Dates.toprev(dt,Dates.Mon) == Dates.Date(2014,5,19)
 @test Dates.toprev(dt,Dates.Tue) == Dates.Date(2014,5,20)
-# No dayofweek function for out of range values
-# @test_throws KeyError Dates.toprev(dt,8)
 
 @test Dates.toprev(Dates.Date(0),Dates.Mon) == Dates.Date(-1,12,27)
 
