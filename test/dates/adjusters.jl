@@ -97,6 +97,10 @@ g = Dates.Date(2014,1,12)
 @test Dates.firstdayofweek(e) == a
 @test Dates.firstdayofweek(f) == a
 @test Dates.firstdayofweek(g) == a
+@test Dates.firstdayofweek(c, Dates.Mon) == a
+@test Dates.firstdayofweek(c, Dates.Wed) == c
+@test Dates.firstdayofweek(c, Dates.Sun) == Dates.Date(2014,1,5)
+
 # Test firstdayofweek over the course of the year
 dt = a
 for i = 0:364
@@ -139,6 +143,11 @@ g = Dates.Date(2014,1,12)
 @test Dates.lastdayofweek(e) == g
 @test Dates.lastdayofweek(f) == g
 @test Dates.lastdayofweek(g) == g
+
+@test Dates.lastdayofweek(c, Dates.Sun) == g
+@test Dates.lastdayofweek(c, Dates.Sat) == f
+@test Dates.lastdayofweek(g, Dates.Sat) == Dates.Date(2014,1,18)
+
 dt = a
 for i = 0:364
     @test Dates.lastdayofweek(dt) == g + Dates.Week(div(i,7))
