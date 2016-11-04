@@ -30,7 +30,7 @@ Adjusts `dt` to the first day of its week. The optional second argument specifie
 """
 function firstdayofweek end
 
-firstdayofweek(dt::Date, firstday::DayOfWeek=Monday) = Date(UTD(value(dt) - mod(Int(DayOfWeek(dt)) - Int(firstday),7)))
+firstdayofweek(dt::Date, firstday::DayOfWeek=Monday) = dt - Day(mod(Int(DayOfWeek(dt)) - Int(firstday),7))
 firstdayofweek(dt::DateTime, firstday::DayOfWeek=Monday) = DateTime(firstdayofweek(Date(dt),firstday))
 
 """
@@ -41,7 +41,7 @@ Adjusts `dt` to the last day of its week. The optional second argument specifies
 """
 function lastdayofweek end
 
-lastdayofweek(dt::Date, lastday::DayOfWeek=Sunday) = Date(UTD(value(dt) + mod(Int(lastday) - Int(DayOfWeek(dt)),7)))
+lastdayofweek(dt::Date, lastday::DayOfWeek=Sunday) = dt + Day(mod(Int(lastday) - Int(DayOfWeek(dt)),7))
 lastdayofweek(dt::DateTime, lastday::DayOfWeek=Sunday) = DateTime(lastdayofweek(Date(dt),lastday))
 
 """
@@ -51,7 +51,7 @@ Adjusts `dt` to the first day of its month.
 """
 function firstdayofmonth end
 
-firstdayofmonth(dt::Date) = Date(UTD(value(dt) - dayofmonth(dt) + 1))
+firstdayofmonth(dt::Date) = dt - Day(dayofmonth(dt) - 1)
 firstdayofmonth(dt::DateTime) = DateTime(firstdayofmonth(Date(dt)))
 
 """
@@ -63,7 +63,7 @@ function lastdayofmonth end
 
 function lastdayofmonth(dt::Date)
     y, m, d = yearmonthday(dt)
-    return Date(UTD(value(dt) + daysinmonth(y, m) - d))
+    return dt + Day(daysinmonth(y, m) - d)
 end
 lastdayofmonth(dt::DateTime) = DateTime(lastdayofmonth(Date(dt)))
 
@@ -74,7 +74,7 @@ Adjusts `dt` to the first day of its year.
 """
 function firstdayofyear end
 
-firstdayofyear(dt::Date) = Date(UTD(value(dt) - dayofyear(dt) + 1))
+firstdayofyear(dt::Date) = dt - Day(dayofyear(dt) - 1)
 firstdayofyear(dt::DateTime) = DateTime(firstdayofyear(Date(dt)))
 
 """
@@ -86,7 +86,7 @@ function lastdayofyear end
 
 function lastdayofyear(dt::Date)
     y, m, d = yearmonthday(dt)
-    return Date(UTD(value(dt) + daysinyear(y) - dayofyear(y, m, d)))
+    return dt + Day(daysinyear(y) - dayofyear(y, m, d))
 end
 lastdayofyear(dt::DateTime) = DateTime(lastdayofyear(Date(dt)))
 
@@ -188,11 +188,10 @@ end
 
 # "same" indicates whether the current date can be considered or not
 """
-    tonext(dt::TimeType,dow::DayOfWeek;same::Bool=false) -> TimeType
+    tonext(dt::TimeType, dow::DayOfWeek; same::Bool=false) -> TimeType
 
-Adjusts `dt` to the next day of week corresponding to `dow` with `1 = Monday, 2 = Tuesday,
-etc`. Setting `same=true` allows the current `dt` to be considered as the next `dow`,
-allowing for no adjustment to occur.
+Adjusts `dt` to the next day of week corresponding to `dow`. Setting `same=true` allows
+the current `dt` to be considered as the next `dow`, allowing for no adjustment to occur.
 """
 tonext(dt::TimeType, dow::DayOfWeek; same::Bool=false) = lastdayofweek(same ? dt : dt+Day(1), dow)
 
@@ -210,11 +209,11 @@ function tonext(func::Function, dt::TimeType;step::Period=Day(1), negate::Bool=f
 end
 
 """
-    toprev(dt::TimeType,dow::DayOfWeek;same::Bool=false) -> TimeType
+    toprev(dt::TimeType, dow::DayOfWeek; same::Bool=false) -> TimeType
 
-Adjusts `dt` to the previous day of week corresponding to `dow` with `1 = Monday, 2 =
-Tuesday, etc`. Setting `same=true` allows the current `dt` to be considered as the previous
-`dow`, allowing for no adjustment to occur.
+Adjusts `dt` to the previous day of week corresponding to `dow`. Setting `same=true`
+allows the current `dt` to be considered as the previous `dow`, allowing for no adjustment
+to occur.
 """
 toprev(dt::TimeType, dow::DayOfWeek; same::Bool=false) = firstdayofweek(same ? dt : dt-Day(1), dow)
 
@@ -244,7 +243,7 @@ end
 
 # Return the last TimeType that falls on dow in the Month or Year
 """
-    tolast(dt::TimeType,dow::DayOfWeek;of=Month) -> TimeType
+    tolast(dt::TimeType, dow::DayOfWeek; of=Month) -> TimeType
 
 Adjusts `dt` to the last `dow` of its month. Alternatively, `of=Year` will adjust to the
 last `dow` of the year.

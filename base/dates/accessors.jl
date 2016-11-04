@@ -44,7 +44,7 @@ end
 value(dt::TimeType) = dt.instant.periods.value
 
 """
-    Dates.days(dt::TimeType)
+    days(dt::TimeType) -> Int64
 
 The Rata Die day number: the number of days since `Date("0000-12-31")`.
 """
