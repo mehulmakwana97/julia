@@ -1086,4 +1086,22 @@ eval(Base.LinAlg, quote
     end
 end)
 
+# #19212
+eval(Base.Dates,quote
+    @deprecate(dayofweek(dt), Int64(DayOfWeek(dt)))
+    @deprecate(tonext(dt::TimeType, dow::Int; same::Bool=false),
+               tonext(dt, DayOfWeek(dow); same=same))
+    @deprecate(toprev(dt::TimeType, dow::Int; same::Bool=false),
+               toprev(dt, DayOfWeek(dow); same=same))
+    @deprecate(tofirst(dt::TimeType, dow::Int; of::Union{Type{Year}, Type{Month}}=Month),
+               tofirst(dt, DayOfWeek(dow); same=same))
+    @deprecate(tolast(dt::TimeType, dow::Int; of::Union{Type{Year}, Type{Month}}=Month),
+               tolast(dt, DayOfWeek(dow); same=same))
+    @deprecate(dayname(dt::Integer;locale::AbstractString="english"),
+               dayname(DayOfWeek(dt); locale=locale))
+    @deprecate(dayabbr(dt::Integer;locale::AbstractString="english"),
+               dayabbr(DayOfWeek(dt); locale=locale))
+end)
+
+
 # End deprecations scheduled for 0.6
